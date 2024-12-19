@@ -1,0 +1,160 @@
+2024-12-19 15:10:07,327 - INFO - Fetching website content...
+2024-12-19 15:10:07,328 - INFO - Fetching publications...
+2024-12-19 15:10:07,328 - INFO - Fetching page 1 of publications...
+2024-12-19 15:10:12,245 - INFO - Found 0 publications items
+2024-12-19 15:10:12,246 - INFO - Fetching blogs...
+2024-12-19 15:10:12,246 - INFO - Fetching page 1 of blogs...
+2024-12-19 15:10:15,900 - INFO - Found 0 blogs items
+2024-12-19 15:10:15,900 - INFO - Fetching press...
+2024-12-19 15:10:15,900 - INFO - Fetching page 1 of press...
+2024-12-19 15:10:18,319 - ERROR - Error making request to https://aphrc.org/press-releases: 404 Client Error: Not Found for url: https://aphrc.org/press-releases
+2024-12-19 15:10:18,319 - ERROR - Error on page 1: 404 Client Error: Not Found for url: https://aphrc.org/press-releases
+2024-12-19 15:10:18,319 - INFO - Found 0 press items
+2024-12-19 15:10:18,319 - INFO - Fetching news...
+2024-12-19 15:10:18,319 - INFO - Fetching page 1 of news...
+2024-12-19 15:10:21,979 - INFO - Found 0 news items
+2024-12-19 15:10:21,979 - INFO - Fetching stories...
+2024-12-19 15:10:21,979 - INFO - Fetching page 1 of stories...
+2024-12-19 15:10:24,447 - ERROR - Error making request to https://aphrc.org/stories: 404 Client Error: Not Found for url: https://aphrc.org/stories
+2024-12-19 15:10:24,448 - ERROR - Error on page 1: 404 Client Error: Not Found for url: https://aphrc.org/stories
+2024-12-19 15:10:24,448 - INFO - Found 0 stories items
+2024-12-19 15:10:24,448 - INFO - Found 0 website items
+2024-12-19 15:10:24,449 - INFO - Fetching Knowhub publications...
+2024-12-19 15:10:24,449 - ERROR - Error: 'KnowhubScraper' object has no attribute 'fetch_publications'
+2024-12-19 15:13:30,995 - INFO - Fetching website content...
+2024-12-19 15:13:30,996 - INFO - Fetching publications...
+2024-12-19 15:13:30,996 - INFO - Fetching page 1 of publications...
+2024-12-19 15:13:35,495 - INFO - Found 0 publications items
+2024-12-19 15:13:35,495 - INFO - Fetching blogs...
+2024-12-19 15:13:35,495 - INFO - Fetching page 1 of blogs...
+2024-12-19 15:13:39,037 - INFO - Found 0 blogs items
+2024-12-19 15:13:39,037 - INFO - Fetching press...
+2024-12-19 15:13:39,037 - INFO - Fetching page 1 of press...
+2024-12-19 15:13:41,448 - ERROR - Error making request to https://aphrc.org/press-releases: 404 Client Error: Not Found for url: https://aphrc.org/press-releases
+2024-12-19 15:13:41,449 - ERROR - Error on page 1: 404 Client Error: Not Found for url: https://aphrc.org/press-releases
+2024-12-19 15:13:41,449 - INFO - Found 0 press items
+2024-12-19 15:13:41,449 - INFO - Fetching news...
+2024-12-19 15:13:41,449 - INFO - Fetching page 1 of news...
+2024-12-19 15:13:44,978 - INFO - Found 0 news items
+2024-12-19 15:13:44,978 - INFO - Fetching stories...
+2024-12-19 15:13:44,978 - INFO - Fetching page 1 of stories...
+2024-12-19 15:13:47,396 - ERROR - Error making request to https://aphrc.org/stories: 404 Client Error: Not Found for url: https://aphrc.org/stories
+2024-12-19 15:13:47,396 - ERROR - Error on page 1: 404 Client Error: Not Found for url: https://aphrc.org/stories
+2024-12-19 15:13:47,396 - INFO - Found 0 stories items
+2024-12-19 15:13:47,396 - INFO - Found 0 website items
+2024-12-19 15:13:47,397 - INFO - Fetching Knowhub publications...
+2024-12-19 15:13:47,397 - INFO - Fetching publications (offset: 0)...
+2024-12-19 15:13:49,843 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:50,373 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:50,882 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:51,391 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:51,911 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:52,415 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:52,911 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:53,438 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:53,972 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:54,488 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:54,966 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:55,458 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:13:55,948 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:00,713 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:01,199 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:01,717 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:02,203 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:03,142 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:03,617 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:04,092 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:05,092 - INFO - Fetching publications (offset: 20)...
+2024-12-19 15:14:06,278 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:06,768 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:07,296 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:07,820 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:08,267 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:08,721 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:09,228 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:09,765 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:10,266 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:10,768 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:11,325 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:11,822 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:12,294 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:13,156 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:13,646 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:14,141 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:14:14,584 - ERROR - Error parsing publication: UnifiedContent.__init__() got an unexpected keyword argument 'document_type'
+2024-12-19 15:17:01,332 - INFO - Fetching website content...
+2024-12-19 15:17:01,333 - INFO - Fetching publications...
+2024-12-19 15:17:01,333 - INFO - Fetching page 1 of publications...
+2024-12-19 15:17:07,891 - INFO - Found 0 publications items
+2024-12-19 15:17:07,891 - INFO - Fetching blogs...
+2024-12-19 15:17:07,891 - INFO - Fetching page 1 of blogs...
+2024-12-19 15:17:11,794 - INFO - Found 0 blogs items
+2024-12-19 15:17:11,794 - INFO - Fetching press...
+2024-12-19 15:17:11,794 - INFO - Fetching page 1 of press...
+2024-12-19 15:17:14,364 - ERROR - Error making request to https://aphrc.org/press-releases: 404 Client Error: Not Found for url: https://aphrc.org/press-releases
+2024-12-19 15:17:14,364 - ERROR - Error on page 1: 404 Client Error: Not Found for url: https://aphrc.org/press-releases
+2024-12-19 15:17:14,365 - INFO - Found 0 press items
+2024-12-19 15:17:14,365 - INFO - Fetching news...
+2024-12-19 15:17:14,365 - INFO - Fetching page 1 of news...
+2024-12-19 15:17:18,072 - INFO - Found 0 news items
+2024-12-19 15:17:18,073 - INFO - Fetching stories...
+2024-12-19 15:17:18,073 - INFO - Fetching page 1 of stories...
+2024-12-19 15:17:22,966 - ERROR - Error making request to https://aphrc.org/stories: 404 Client Error: Not Found for url: https://aphrc.org/stories
+2024-12-19 15:17:22,966 - ERROR - Error on page 1: 404 Client Error: Not Found for url: https://aphrc.org/stories
+2024-12-19 15:17:22,966 - INFO - Found 0 stories items
+2024-12-19 15:17:22,966 - INFO - Found 0 website items
+2024-12-19 15:17:22,967 - INFO - Fetching Knowhub publications...
+2024-12-19 15:17:22,967 - INFO - Fetching publications (offset: 0)...
+2024-12-19 15:17:24,754 - INFO - Found: Enhancing Participation and Quality of Experiences of Women in Science Technology Engineering and Ma...
+2024-12-19 15:17:25,270 - INFO - Found: Examining Participation and Quality of Experiences of Women in Science, Technology, Engineering, and...
+2024-12-19 15:17:25,270 - INFO - Found 2 Knowhub publications
+2024-12-19 15:17:25,270 - INFO - Fetching ORCID publications...
+2024-12-19 15:17:27,867 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:28,347 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:29,311 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:29,551 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:30,507 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:30,746 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:30,985 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:31,708 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:32,670 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:33,149 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:33,389 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:34,106 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:34,832 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:35,075 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:35,318 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:35,799 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:36,045 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:36,282 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:37,252 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:37,744 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:37,990 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:38,233 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:38,473 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:38,723 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:38,967 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:39,211 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:39,702 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:39,946 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:40,186 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:40,429 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:40,668 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:41,149 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:41,401 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:41,642 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:41,884 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:42,134 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:42,377 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:42,620 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:43,100 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:43,340 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:43,582 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:43,824 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:44,071 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:44,316 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:44,556 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:44,796 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:45,034 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:45,276 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
+2024-12-19 15:17:45,517 - ERROR - Error converting work to unified content: 'NoneType' object has no attribute 'get'
