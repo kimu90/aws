@@ -196,31 +196,51 @@ async def main():
         print("\nAPHRC Content Aggregator")
         print("=====================")
         
+        # Find experts CSV automatically
+        try:
+            input_csv = find_experts_csv()
+            print(f"\nFound experts CSV: {input_csv}")
+        except FileNotFoundError:
+            input_csv = input("\nEnter path to experts CSV file: ").strip()
+            if not os.path.exists(input_csv):
+                print(f"Error: File {input_csv} not found!")
+                return
+        
         # Get number of items to fetch per source
         limit = input("\nHow many items to fetch per source? (default 100, 0 for all): ")
         limit = int(limit) if limit.isdigit() else 100
         
-        # Create exporter
+        # Create exporter and output directory
         exporter = ContentExporter()
         output_dir = "output"
         os.makedirs(output_dir, exist_ok=True)
         
-        # Only process Website
-        output_sources = {}
+        # 1. Process experts through OpenAlex
+        print("\nProcessing experts through OpenAlex...")
+        openalex_data = await process_experts(input_csv, logger)
         
-        # Process Website
-        try:
-            logger.info("Fetching website content...")
-            website_scraper = WebsiteScraper()
-            website_content = website_scraper.fetch_content(limit=limit)
-            
-            # Store Website content
-            output_sources['website'] = website_content
-            logger.info(f"Found {len(website_content)} website items")
-            
-            # Save Website content
-            if website_content:
-                website_df = pd.DataFrame([{
+        # Save OpenAlex publications
+        openalex_pubs_path = os.path.join(output_dir, "openalex.csv")
+        openalex_data['publications'].to_csv(openalex_pubs_path, index=False)
+        print(f"\nSaved OpenAlex results to: {openalex_pubs_path}")
+        
+        # 2. Process additional sources - now passing output_dir instead of DataFrame
+        print("\nFetching from additional sources...")
+        additional_sources = await process_additional_sources(
+            output_dir,  # Changed from openalex_data['publications']
+            exporter,
+            limit,
+            logger
+        )
+        # Save additional sources individually
+        for source, content in additional_sources.items():
+            if content:
+                # Export each source to a separate CSV
+                filename = f"{source}.csv"
+                filepath = os.path.join(output_dir, filename)
+                
+                # Create DataFrame from content
+                df = pd.DataFrame([{
                     'title': item.title,
                     'authors': '; '.join(item.authors),
                     'date': item.date.strftime('%Y-%m-%d') if item.date else '',
@@ -229,19 +249,60 @@ async def main():
                     'url': item.url,
                     'content_type': item.content_type,
                     'keywords': '; '.join(item.keywords),
-                    'full_text': item.full_text,
-                    'image_url': item.image_url
-                } for item in website_content])
+                    'journal': item.journal,
+                    'document_type': item.document_type,
+                    'handle': item.handle,
+                    'orcid_id': item.orcid_id
+                } for item in content])
                 
-                website_path = os.path.join(output_dir, "website.csv")
-                website_df.to_csv(website_path, index=False)
-                print(f"\nSaved Website content to: {website_path}")
+                df.to_csv(filepath, index=False)
+                print(f"Saved {source} publications to: {filepath}")
         
-        except Exception as e:
-            logger.error(f"Error fetching website content: {e}")
+        # 3. Create merged dataset
+        print("\nMerging all sources...")
+        
+        # Prepare source DataFrames for merging
+        source_dataframes = [
+            openalex_data['publications']
+        ]
+        
+        # Add additional source DataFrames if they exist
+        for source, content in additional_sources.items():
+            if content:
+                df = pd.DataFrame([{
+                    'Title': item.title,
+                    'DOI': item.doi,
+                    # Add other columns as needed to match OpenAlex DataFrame
+                    'Abstract': item.abstract,
+                    'Authors': '; '.join(item.authors),
+                    # Add more columns here
+                } for item in content])
+                source_dataframes.append(df)
+        
+        # Merge sources
+        merged_df = exporter.merge_all_sources(*source_dataframes)
+        
+        # Save merged dataset
+        # Save merged dataset
+        merged_path = os.path.join(output_dir, "merged.csv")
+        merged_df.to_csv(merged_path, index=False)
         
         print(f"\nResults summary:")
-        print(f"- Website items: {len(output_sources.get('website', []))}")
+        print(f"- OpenAlex publications: {len(openalex_data['publications'])}")
+        
+        for source, content in additional_sources.items():
+            print(f"- {source.capitalize()} publications: {len(content)}")
+        
+        print(f"- Total unique items in merged dataset: {len(merged_df)}")
+        
+        print(f"\nFiles saved:")
+        print(f"- OpenAlex: {openalex_pubs_path}")
+        
+        for source, content in additional_sources.items():
+            if content:
+                print(f"- {source.capitalize()}: {os.path.join(output_dir, f'{source}.csv')}")
+        
+        print(f"- Merged: {merged_path}")
             
     except KeyboardInterrupt:
         print("\nOperation cancelled by user.")

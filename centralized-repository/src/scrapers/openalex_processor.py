@@ -34,30 +34,38 @@ class OpenAlexCSVProcessor:
                 try:
                     first_name = row['First_name']
                     last_name = row['Last_name']
+                    csv_orcid = row.get('ORCID', '')  # Get ORCID from CSV if present
                     
                     logger.info(f"Processing expert: {first_name} {last_name}")
                     
-                    # Get OpenAlex data
-                    expert_data = await self.get_expert_data(session, first_name, last_name)
+                    # Get OpenAlex data, preferring CSV ORCID if available
+                    if csv_orcid:
+                        # If we have ORCID, just get OpenAlex ID
+                        openalex_id = await self.get_openalex_id_from_orcid(session, csv_orcid)
+                        expert_data = (csv_orcid, openalex_id)
+                    else:
+                        # Otherwise search by name
+                        expert_data = await self.get_expert_data(session, first_name, last_name)
+                    
                     if expert_data:
                         # Add enriched expert data
                         expert_row = {
                             'First_name': first_name,
                             'Last_name': last_name,
+                            'ORCID': expert_data[0],  # ORCID is always first element
+                            'OpenAlex_ID': expert_data[1],
                             'Designation': row.get('Designation', ''),
                             'Theme': row.get('Theme', ''),
                             'Unit': row.get('Unit', ''),
                             'Contact_Details': row.get('Contact Details', ''),
                             'Knowledge_Expertise': row.get('Knowledge and Expertise', ''),
-                            'ORCID': expert_data[0],
-                            'OpenAlex_ID': expert_data[1],
                             'Domains': '',
                             'Fields': '',
                             'Subfields': ''
                         }
                         
                         # Get domains, fields, and subfields
-                        if expert_data[1]:
+                        if expert_data[1]:  # If we have OpenAlex ID
                             domains, fields, subfields = await self.get_expert_domains(
                                 session, first_name, last_name, expert_data[1]
                             )
@@ -67,14 +75,13 @@ class OpenAlexCSVProcessor:
                         
                         experts_enriched.append(expert_row)
                         
-                        # Process publications
+                        # Process publications - now including ORCID
                         if expert_data[1]:
-                            pubs = await self.get_expert_works(
-                                session, 
-                                expert_data[1]
-                            )
+                            pubs = await self.get_expert_works(session, expert_data[1])
                             for pub in pubs:
-                                pub_data = self.process_publication(pub, first_name, last_name)
+                                pub_data = self.process_publication(
+                                    pub, first_name, last_name, expert_data[0]
+                                )
                                 if pub_data:
                                     publications_data.append(pub_data)
                     
@@ -177,8 +184,27 @@ class OpenAlexCSVProcessor:
             logger.error(f"Error fetching data for {first_name} {last_name}: {e}")
         return '', ''
 
+    async def get_openalex_id_from_orcid(self, session: aiohttp.ClientSession, 
+                                        orcid: str) -> str:
+        """Get OpenAlex ID using ORCID."""
+        search_url = f"{self.base_url}/authors"
+        params = {
+            "filter": f"orcid:{orcid}"
+        }
+        
+        try:
+            async with session.get(search_url, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    results = data.get('results', [])
+                    if results:
+                        return results[0].get('id', '')
+        except Exception as e:
+            logger.error(f"Error getting OpenAlex ID for ORCID {orcid}: {e}")
+        return ''
+
     def process_publication(self, work: Dict, author_first_name: str, 
-                          author_last_name: str) -> Optional[Dict]:
+                      author_last_name: str, orcid: str) -> Optional[Dict]:
         """Process a single publication work."""
         try:
             # Extract basic publication data
@@ -190,6 +216,8 @@ class OpenAlexCSVProcessor:
             if not title:
                 return None
                 
+            # Clean ORCID - remove URL prefix if present
+            clean_orcid = orcid.replace('https://orcid.org/', '') if orcid else ''
             # Process abstract
             abstract = work.get('abstract_inverted_index', '')
             if abstract:
@@ -219,7 +247,8 @@ class OpenAlexCSVProcessor:
                 'Journal': work.get('primary_location', {}).get('source', {}).get('display_name', ''),
                 'Citations_Count': work.get('cited_by_count', 0),
                 'Expert_First_Name': author_first_name,
-                'Expert_Last_Name': author_last_name
+                'Expert_Last_Name': author_last_name,
+                'Expert_ORCID': clean_orcid  # Store clean ORCID
             }
             
         except Exception as e:

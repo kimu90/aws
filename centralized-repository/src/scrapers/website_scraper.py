@@ -1,9 +1,7 @@
-# File: src/scrapers/website_scraper.py
-
 from ..models.content import UnifiedContent
 from .base_scraper import BaseScraper
 from bs4 import BeautifulSoup
-from typing import List, Dict
+from typing import List, Dict, Optional
 from time import sleep
 from datetime import datetime
 import re
@@ -12,161 +10,199 @@ class WebsiteScraper(BaseScraper):
     def __init__(self):
         super().__init__()
         self.base_url = "https://aphrc.org"
-        self.content_types = {
-            'publications': f"{self.base_url}/publications",
-            'blogs': f"{self.base_url}/blog",
-            'press': f"{self.base_url}/press-releases",
-            'news': f"{self.base_url}/news",
-            'stories': f"{self.base_url}/stories"
+        self.urls = {
+            'publications': f"{self.base_url}/publications/",
+            'documents': f"{self.base_url}/documents_reports/",
+            'ideas': f"{self.base_url}/ideas/"
         }
 
-    def fetch_content(self, content_types: List[str] = None, limit: int = 100) -> List[UnifiedContent]:
-        """Fetch content from selected content types"""
+    def fetch_content(self, limit: int = 100) -> List[UnifiedContent]:
+        """Fetch content from specified URLs"""
         all_items = []
-        types_to_fetch = content_types or list(self.content_types.keys())
         
-        for content_type in types_to_fetch:
-            if content_type not in self.content_types:
-                self.logger.warning(f"Unknown content type: {content_type}")
-                continue
-                
-            self.logger.info(f"Fetching {content_type}...")
-            items = self._fetch_content_type(content_type, self.content_types[content_type], limit)
-            all_items.extend(items)
-            self.logger.info(f"Found {len(items)} {content_type} items")
-        
-        return all_items
-
-    def _fetch_content_type(self, content_type: str, base_url: str, limit: int) -> List[UnifiedContent]:
-        items = []
-        page = 1
-        seen_urls = set()
-        
-        while len(items) < limit or limit == 0:
+        for section, url in self.urls.items():
+            self.logger.info(f"Fetching {section} from {url}")
             try:
-                self.logger.info(f"Fetching page {page} of {content_type}...")
-                
-                # Handle pagination
-                url = f"{base_url}/page/{page}/" if page > 1 else base_url
                 response = self._make_request(url)
+                if response.status_code != 200:
+                    self.logger.error(f"Failed to access {section}: {response.status_code}")
+                    continue
+
                 soup = BeautifulSoup(response.text, 'html.parser')
                 
-                # Find all content items on the page
-                content_items = self._find_content_items(soup, content_type)
-                if not content_items:
+                if self._has_load_more_button(soup):
+                    items = self._fetch_with_load_more(url, section, limit)
+                else:
+                    items = self._fetch_with_pagination(url, section, limit)
+                
+                all_items.extend(items)
+                self.logger.info(f"Found {len(items)} items in {section}")
+                
+                if limit and len(all_items) >= limit:
+                    all_items = all_items[:limit]
                     break
+                    
+            except Exception as e:
+                self.logger.error(f"Error fetching {section}: {str(e)}")
+                continue
                 
-                for item in content_items:
-                    try:
-                        content = self._parse_content_item(item, content_type)
-                        if content and content.url not in seen_urls:
-                            seen_urls.add(content.url)
-                            items.append(content)
-                            self.logger.info(f"Found: {content.title[:100]}...")
-                            
-                            if limit > 0 and len(items) >= limit:
-                                break
-                    except Exception as e:
-                        self.logger.error(f"Error parsing content item: {str(e)}")
-                        continue
-                
-                if limit > 0 and len(items) >= limit:
+        return all_items
+
+    def _has_load_more_button(self, soup: BeautifulSoup) -> bool:
+        """Check if page has a load more button or infinite scroll"""
+        load_more_selectors = [
+            '.load-more',
+            '.elementor-button-link',
+            'button[data-page]',
+            '.elementor-pagination'
+        ]
+        return any(bool(soup.select(selector)) for selector in load_more_selectors)
+
+    def _fetch_with_load_more(self, url: str, section: str, limit: int) -> List[UnifiedContent]:
+        """Handle infinite scroll or load more pagination"""
+        items = []
+        page = 1
+        
+        while True:
+            try:
+                next_page_url = f"{url}page/{page}/"
+                response = self._make_request(next_page_url)
+                if response.status_code != 200:
                     break
+                    
+                soup = BeautifulSoup(response.text, 'html.parser')
+                new_items = self._extract_items(soup, section)
                 
+                if not new_items:
+                    break
+                    
+                items.extend(new_items)
+                self.logger.info(f"Loaded page {page}, total items: {len(items)}")
+                
+                if limit and len(items) >= limit:
+                    items = items[:limit]
+                    break
+                    
                 page += 1
-                sleep(1)  # Be nice to the server
+                sleep(1)
                 
             except Exception as e:
-                self.logger.error(f"Error on page {page}: {str(e)}")
+                self.logger.error(f"Error loading more items: {str(e)}")
                 break
-        
-        return items[:limit] if limit > 0 else items
-
-    def _find_content_items(self, soup: BeautifulSoup, content_type: str) -> List:
-        """Find content items based on content type"""
-        selectors = {
-            'publications': ['article.publication', 'div.publication-item', '.research-publication'],
-            'blogs': ['article.post', 'div.blog-post', '.blog-entry'],
-            'press': ['article.press-release', 'div.press-item', '.media-release'],
-            'news': ['article.news-item', 'div.news-content', '.news-entry'],
-            'stories': ['article.story', 'div.story-item', '.story-entry']
-        }
-        
-        items = []
-        for selector in selectors.get(content_type, []):
-            items.extend(soup.select(selector))
-        
-        if not items:
-            # Fallback to generic selectors
-            items = soup.select('article, .post, .entry-content')
-            
+                
         return items
 
-    def _parse_content_item(self, item_soup: BeautifulSoup, content_type: str) -> UnifiedContent:
-        """Parse a content item into UnifiedContent format"""
+    def _fetch_with_pagination(self, url: str, section: str, limit: int) -> List[UnifiedContent]:
+        """Handle traditional numbered pagination"""
+        items = []
+        page = 1
+        
+        while True:
+            try:
+                page_url = f"{url}page/{page}/" if page > 1 else url
+                response = self._make_request(page_url)
+                
+                if response.status_code != 200:
+                    break
+                    
+                soup = BeautifulSoup(response.text, 'html.parser')
+                new_items = self._extract_items(soup, section)
+                
+                if not new_items:
+                    break
+                    
+                items.extend(new_items)
+                self.logger.info(f"Processed page {page}, total items: {len(items)}")
+                
+                if limit and len(items) >= limit:
+                    items = items[:limit]
+                    break
+                    
+                page += 1
+                sleep(1)
+                
+            except Exception as e:
+                self.logger.error(f"Error processing page {page}: {str(e)}")
+                break
+                
+        return items
+
+    def _extract_items(self, soup: BeautifulSoup, section: str) -> List[UnifiedContent]:
+        """Extract items from a page"""
+        items = []
+        
+        selectors = {
+            'publications': ['.elementor-post', '.publication-item', 'article'],
+            'documents': ['.document-item', '.report-item', 'article'],
+            'ideas': ['.post', '.idea-item', 'article']
+        }
+        
+        for selector in selectors.get(section, []):
+            elements = soup.select(selector)
+            if elements:
+                break
+        
+        for element in elements:
+            try:
+                item = self._parse_item(element, section)
+                if item:
+                    items.append(item)
+            except Exception as e:
+                self.logger.error(f"Error parsing item: {str(e)}")
+                continue
+                
+        return items
+
+    def _parse_item(self, element: BeautifulSoup, section: str) -> Optional[UnifiedContent]:
+        """Parse a single item"""
         try:
-            # Find title and URL
-            title_elem = item_soup.select_one('h1 a, h2 a, h3 a, h4 a, .entry-title a')
+            title_elem = element.select_one('h1, h2, h3, h4, a')
             if not title_elem:
                 return None
+                
+            title = title_elem.text.strip()
             
-            url = title_elem.get('href', '')
+            if title_elem.name == 'a':
+                url = title_elem.get('href', '')
+            else:
+                link = element.find('a')
+                url = link.get('href', '') if link else ''
+
             if not url.startswith('http'):
                 url = self.base_url + url
-            
-            try:
-                # Get detailed page
-                response = self._make_request(url)
-                detail_soup = BeautifulSoup(response.text, 'html.parser')
-            except Exception as e:
-                self.logger.error(f"Error fetching detail page {url}: {str(e)}")
-                detail_soup = item_soup
-            
-            # Extract DOI if available
-            doi = self._extract_doi(detail_soup)
-            
-            # Extract date
-            date_str = self._extract_date(detail_soup)
-            pub_date = self._parse_date(date_str) if date_str else None
-            
+                
+            date_elem = element.select_one('.date, .elementor-post-date, time')
+            date = None
+            if date_elem:
+                date_str = date_elem.get('datetime', '') or date_elem.text.strip()
+                date = self._parse_date(date_str)
+                
+            excerpt_elem = element.select_one('.excerpt, .description, p')
+            excerpt = excerpt_elem.text.strip() if excerpt_elem else ''
+
             return UnifiedContent(
-                title=title_elem.text.strip(),
-                authors=self._extract_authors(detail_soup),
-                date=pub_date,
-                abstract=self._extract_abstract(detail_soup),
+                title=title,
+                authors=[],
+                date=date,
+                abstract=excerpt,
                 url=url,
                 source='website',
-                content_type=content_type,
-                keywords=self._extract_tags(detail_soup),
-                doi=doi,
-                full_text=self._extract_full_text(detail_soup),
-                image_url=self._extract_image_url(detail_soup)
+                content_type=section,
+                keywords=[],
+                doi='',
+                full_text=''
             )
             
         except Exception as e:
-            self.logger.error(f"Error parsing content item: {str(e)}")
+            self.logger.error(f"Error parsing item: {str(e)}")
             return None
 
-    def _extract_doi(self, soup: BeautifulSoup) -> str:
-        """Extract DOI if available"""
-        doi_elem = soup.select_one('.doi, .publication-doi, a[href*="doi.org"]')
-        if doi_elem:
-            doi_text = doi_elem.get('href', '') or doi_elem.text
-            doi_match = re.search(r'10.\d{4,9}/[-._;()/:\w]+', doi_text)
-            return doi_match.group(0) if doi_match else ''
-        return ''
-
-    def _extract_date(self, soup: BeautifulSoup) -> str:
-        """Extract publication date"""
-        date_elem = soup.select_one('.date, .entry-date, .published, time[datetime]')
-        if date_elem:
-            return date_elem.get('datetime', '') or date_elem.text.strip()
-        return ''
-
-    def _parse_date(self, date_str: str) -> datetime:
+    def _parse_date(self, date_str: str) -> Optional[datetime]:
         """Parse date string into datetime object"""
+        if not date_str:
+            return None
+            
         try:
-            # Try common date formats
             formats = [
                 '%Y-%m-%d',
                 '%B %d, %Y',
@@ -177,61 +213,15 @@ class WebsiteScraper(BaseScraper):
             
             for fmt in formats:
                 try:
-                    return datetime.strptime(date_str, fmt)
+                    return datetime.strptime(date_str.strip(), fmt)
                 except ValueError:
                     continue
-            
+                    
+            year_match = re.search(r'\d{4}', date_str)
+            if year_match:
+                return datetime(int(year_match.group(0)), 1, 1)
+                
             return None
+            
         except Exception:
             return None
-
-    def _extract_authors(self, soup: BeautifulSoup) -> List[str]:
-        """Extract author names"""
-        authors = []
-        
-        # Try different author selectors
-        author_elements = soup.select('.author, .entry-author, .post-author, .byline')
-        
-        for elem in author_elements:
-            author_text = elem.text.strip()
-            # Remove common prefixes
-            for prefix in ['By', 'by', 'Author:', 'Authors:']:
-                author_text = author_text.replace(prefix, '').strip()
-            
-            # Split multiple authors
-            for author in author_text.split(','):
-                author = author.strip()
-                if author and author not in authors:
-                    authors.append(author)
-        
-        return authors
-
-    def _extract_abstract(self, soup: BeautifulSoup) -> str:
-        """Extract abstract or excerpt"""
-        abstract_elem = soup.select_one('.entry-summary, .excerpt, .abstract, .post-excerpt')
-        return abstract_elem.text.strip() if abstract_elem else ''
-
-    def _extract_tags(self, soup: BeautifulSoup) -> List[str]:
-        """Extract tags or keywords"""
-        tags = []
-        tag_elements = soup.select('.tags a, .entry-tags a, .post-tags a, .keywords a')
-        
-        for elem in tag_elements:
-            tag = elem.text.strip()
-            if tag and tag not in tags:
-                tags.append(tag)
-                
-        return tags
-
-    def _extract_full_text(self, soup: BeautifulSoup) -> str:
-        """Extract full content text"""
-        content_elem = soup.select_one('.entry-content, .post-content, .article-content')
-        return content_elem.text.strip() if content_elem else ''
-
-    def _extract_image_url(self, soup: BeautifulSoup) -> str:
-        """Extract featured image URL"""
-        image_elem = soup.select_one('.featured-image img, .post-thumbnail img')
-        if image_elem and image_elem.get('src'):
-            image_url = image_elem['src']
-            return image_url if image_url.startswith('http') else self.base_url + image_url
-        return ''
