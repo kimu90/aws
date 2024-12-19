@@ -1,0 +1,20 @@
+# Core Python Libraries
+asyncio
+typing
+
+# Data Processing
+pandas>=2.0.0
+numpy
+
+# API and Web Interactions
+aiohttp
+requests
+
+# Environment and Configuration
+python-dotenv
+
+# Authentication and Scraping
+beautifulsoup4  # Web scraping
+
+# Optional but Recommended
+python-dateutil  # Date parsing
