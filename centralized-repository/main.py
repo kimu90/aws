@@ -87,7 +87,6 @@ async def process_experts(input_csv: str, logger) -> Dict[str, pd.DataFrame]:
 
 async def process_additional_sources(output_dir: str, exporter: ContentExporter, 
                                   limit: int, logger) -> Dict[str, List]:
-    """Process additional sources with incremental saving"""
     output_sources = {}
     
     try:
@@ -110,26 +109,29 @@ async def process_additional_sources(output_dir: str, exporter: ContentExporter,
         
         if orcid_client_id and orcid_client_secret:
             try:
-                orcid_scraper = OrcidScraper(orcid_client_id, orcid_client_secret)
+                orcid_scraper = OrcidScraper(orcid_client_id, orcid_client_secret, os.getenv('GEMINI_API_KEY'))
                 
                 # Get unique ORCIDs from OpenAlex CSV
                 orcids = openalex_df['Expert_ORCID'].dropna().unique()
-                logger.info(f"Found {len(orcids)} unique ORCIDs in OpenAlex data")
+                
+                # Limit to 4 ORCIDs
+                orcids = orcids[:4]
+                logger.info(f"Processing {len(orcids)} unique ORCIDs from OpenAlex data")
                 
                 for orcid_id in orcids:
                     try:
-                        pubs = orcid_scraper.fetch_researcher_publications(orcid_id)
-                        unique_pubs = [pub for pub in pubs 
-                                     if not exporter.is_duplicate(pub.doi, pub.title)]
+                        # Fetch publications
+                        pubs = await orcid_scraper.fetch_researcher_publications(orcid_id)
                         
-                        # Add source to each publication
-                        for pub in unique_pubs:
-                            pub.source = 'ORCID'
-                            pub.orcid_id = orcid_id  # Ensure ORCID is preserved
-                            exporter.add_content(pub.doi, pub.title)
+                        for pub in pubs:
+                            if not exporter.is_duplicate(pub.get('DOI'), pub.get('Title')):
+                                pub['source'] = 'ORCID'
+                                pub['orcid_id'] = orcid_id
+                                exporter.add_content(pub.get('DOI'), pub.get('Title'))
+                                orcid_results.append(pub)
                         
-                        orcid_results.extend(unique_pubs)
-                        logger.info(f"Found {len(unique_pubs)} unique ORCID publications for {orcid_id}")
+                        logger.info(f"Found publications for ORCID {orcid_id}")
+                    
                     except Exception as e:
                         logger.error(f"Error fetching ORCID ID {orcid_id}: {str(e)}")
                         continue
@@ -139,54 +141,11 @@ async def process_additional_sources(output_dir: str, exporter: ContentExporter,
             except Exception as e:
                 logger.error(f"Error initializing ORCID scraper: {e}")
         
-        # 2. Process Knowhub
-        try:
-            logger.info("Fetching Knowhub publications...")
-            knowhub_scraper = KnowhubScraper()
-            knowhub_content = knowhub_scraper.fetch_publications(limit)
-            
-            # Filter unique Knowhub content
-            unique_knowhub = [content for content in knowhub_content 
-                             if not exporter.is_duplicate(content.doi, content.title)]
-            
-            # Add source to each publication
-            for content in unique_knowhub:
-                content.source = 'Knowhub'
-                exporter.add_content(content.doi, content.title)
-            
-            output_sources['knowhub'] = unique_knowhub
-            logger.info(f"Found {len(unique_knowhub)} unique Knowhub publications")
-        
-        except Exception as e:
-            logger.error(f"Error fetching Knowhub publications: {e}")
-        
-        # 3. Process Website
-        try:
-            logger.info("Fetching website content...")
-            website_scraper = WebsiteScraper()
-            website_content = website_scraper.fetch_content(limit=limit)
-            
-            # Filter unique website content
-            unique_website = [content for content in website_content 
-                             if not exporter.is_duplicate(content.doi, content.title)]
-            
-            # Add source to each publication
-            for content in unique_website:
-                content.source = 'Website'
-                exporter.add_content(content.doi, content.title)
-            
-            output_sources['website'] = unique_website
-            logger.info(f"Found {len(unique_website)} unique website items")
-        
-        except Exception as e:
-            logger.error(f"Error fetching website content: {e}")
-        
         return output_sources
         
     except Exception as e:
         logger.error(f"Error processing additional sources: {e}")
-        return output_sources  # Return whatever content was collected so far
-
+        return output_sources
 async def main():
     # Load environment variables and setup logging
     load_dotenv()
@@ -196,52 +155,114 @@ async def main():
         print("\nAPHRC Content Aggregator")
         print("=====================")
         
+        # Find experts CSV automatically
+        try:
+            input_csv = find_experts_csv()
+            print(f"\nFound experts CSV: {input_csv}")
+        except FileNotFoundError:
+            input_csv = input("\nEnter path to experts CSV file: ").strip()
+            if not os.path.exists(input_csv):
+                print(f"Error: File {input_csv} not found!")
+                return
+        
         # Get number of items to fetch per source
         limit = input("\nHow many items to fetch per source? (default 100, 0 for all): ")
         limit = int(limit) if limit.isdigit() else 100
         
-        # Create exporter
+        # Create exporter and output directory
         exporter = ContentExporter()
         output_dir = "output"
         os.makedirs(output_dir, exist_ok=True)
         
-        # Only process Website
-        output_sources = {}
+        # 1. Process experts through OpenAlex
+        print("\nProcessing experts through OpenAlex...")
+        openalex_data = await process_experts(input_csv, logger)
         
-        # Process Website
-        try:
-            logger.info("Fetching website content...")
-            website_scraper = WebsiteScraper()
-            website_content = website_scraper.fetch_content(limit=limit)
-            
-            # Store Website content
-            output_sources['website'] = website_content
-            logger.info(f"Found {len(website_content)} website items")
-            
-            # Save Website content
-            if website_content:
-                website_df = pd.DataFrame([{
-                    'title': item.title,
-                    'authors': '; '.join(item.authors),
-                    'date': item.date.strftime('%Y-%m-%d') if item.date else '',
-                    'abstract': item.abstract,
-                    'doi': item.doi,
-                    'url': item.url,
-                    'content_type': item.content_type,
-                    'keywords': '; '.join(item.keywords),
-                    'full_text': item.full_text,
-                    'image_url': item.image_url
-                } for item in website_content])
+        # Save OpenAlex publications
+        openalex_pubs_path = os.path.join(output_dir, "openalex.csv")
+        openalex_data['publications'].to_csv(openalex_pubs_path, index=False)
+        print(f"\nSaved OpenAlex results to: {openalex_pubs_path}")
+        
+        # 2. Process additional sources - now passing output_dir instead of DataFrame
+        print("\nFetching from additional sources...")
+        additional_sources = await process_additional_sources(
+            output_dir,  # Changed from openalex_data['publications']
+            exporter,
+            limit,
+            logger
+        )
+        # Save additional sources individually
+        source_dataframes = []  # Initialize as an empty list
+
+        for source, content in additional_sources.items():
+            if content:
+                df = pd.DataFrame([{
+                    'Title': item.get('Title', ''),
+                    'DOI': item.get('DOI', ''),
+                    'Abstract': item.get('Abstract', ''),
+                    'Authors': item.get('Authors', ''),
+                    'Publication_Year': item.get('Publication_Year', ''),
+                    'Journal': item.get('Journal', ''),
+                    'orcid_id': item.get('orcid_id', '')
+                } for item in content])
+                source_dataframes.append(df)
                 
-                website_path = os.path.join(output_dir, "website.csv")
-                website_df.to_csv(website_path, index=False)
-                print(f"\nSaved Website content to: {website_path}")
-        
-        except Exception as e:
-            logger.error(f"Error fetching website content: {e}")
+                # Export each source to a separate CSV
+                filename = f"{source}.csv"
+                filepath = os.path.join(output_dir, filename)  # Define filepath
+                df.to_csv(filepath, index=False)
+                print(f"Saved {source} publications to: {filepath}")
+        # 3. Create merged dataset
+        # 3. Create merged dataset
+        print("\nMerging all sources...")
+
+
+
+        # Prepare source DataFrames for merging
+        source_dataframes = [
+            openalex_data['publications']
+        ]
+
+        # Add additional source DataFrames if they exist
+        for source, content in additional_sources.items():
+            if content:
+                df = pd.DataFrame([{
+                    'Title': item.get('Title', ''),
+                    'DOI': item.get('DOI', ''),
+                    'Abstract': item.get('Abstract', ''),
+                    'Authors': item.get('Authors', ''),
+                    'Publication_Year': item.get('Publication_Year', ''),
+                    'Journal': item.get('Journal', ''),
+                    'orcid_id': item.get('orcid_id', '')
+                } for item in content])
+                source_dataframes.append(df)
+
+        # Merge sources
+        merged_df = exporter.merge_all_sources(*source_dataframes)
+
+        # Generate summary column using Gemini API
+        merged_df['summary'] = merged_df.apply(lambda row: exporter.generate_summary(row['Title'], row['Abstract']), axis=1)
+
+        # Save merged dataset
+        merged_path = os.path.join(output_dir, "merged.csv")
+        merged_df.to_csv(merged_path, index=False)
         
         print(f"\nResults summary:")
-        print(f"- Website items: {len(output_sources.get('website', []))}")
+        print(f"- OpenAlex publications: {len(openalex_data['publications'])}")
+        
+        for source, content in additional_sources.items():
+            print(f"- {source.capitalize()} publications: {len(content)}")
+        
+        print(f"- Total unique items in merged dataset: {len(merged_df)}")
+        
+        print(f"\nFiles saved:")
+        print(f"- OpenAlex: {openalex_pubs_path}")
+        
+        for source, content in additional_sources.items():
+            if content:
+                print(f"- {source.capitalize()}: {os.path.join(output_dir, f'{source}.csv')}")
+        
+        print(f"- Merged: {merged_path}")
             
     except KeyboardInterrupt:
         print("\nOperation cancelled by user.")

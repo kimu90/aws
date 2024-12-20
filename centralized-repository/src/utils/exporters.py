@@ -1,7 +1,9 @@
+from typing import List, Dict, Optional
 import pandas as pd 
-from typing import List, Set 
 import os 
-from datetime import datetime  
+from datetime import datetime
+import google.generativeai as genai
+
 
 class ContentExporter:
     def __init__(self, output_dir: str = "output"):
@@ -30,27 +32,22 @@ class ContentExporter:
         if title:
             self.seen_titles.add(title.lower())
      
-    def export_to_csv(self, content_list: List, filename: str) -> str:
+    def export_to_csv(self, content_list: List[Dict], filename: str) -> Optional[str]:
         """Export content to CSV, handling duplicates"""
         unique_content = []
         
         for content in content_list:
-            if not self.is_duplicate(content.doi, content.title):
+            if not self.is_duplicate(content.get('DOI'), content.get('Title')):
                 unique_content.append({
-                    'title': content.title,
-                    'authors': '; '.join(content.authors),
-                    'date': content.date.strftime('%Y-%m-%d') if content.date else '',
-                    'abstract': content.abstract,
-                    'doi': content.doi,
-                    'url': content.url,
-                    'content_type': content.content_type,
-                    'keywords': '; '.join(content.keywords),
-                    'journal': content.journal,
-                    'document_type': content.document_type,
-                    'handle': content.handle,
-                    'orcid_id': content.orcid_id
+                    'title': content.get('Title', ''),
+                    'authors': content.get('Authors', ''),
+                    'date': content.get('Publication_Year', ''),
+                    'abstract': content.get('Abstract', ''),
+                    'doi': content.get('DOI', ''),
+                    'journal': content.get('Journal', ''),
+                    'orcid_id': content.get('orcid_id', '')
                 })
-                self.add_content(content.doi, content.title)
+                self.add_content(content.get('DOI'), content.get('Title'))
          
         if unique_content:
             filepath = os.path.join(self.output_dir, filename)
@@ -81,9 +78,27 @@ class ContentExporter:
         combined_df = pd.concat(source_dfs_with_source, ignore_index=True)
         
         # Remove duplicates based on DOI and title
-        combined_df['title_lower'] = combined_df['Title'].str.lower()
-        combined_df['doi_lower'] = combined_df['DOI'].str.lower()
-        combined_df = combined_df.drop_duplicates(subset=['doi_lower', 'title_lower'], keep='first')
-        combined_df = combined_df.drop(['title_lower', 'doi_lower'], axis=1)
-        
+        combined_df['Title_lower'] = combined_df['Title'].str.lower()
+        combined_df['DOI_lower'] = combined_df['DOI'].str.lower()
+        combined_df = combined_df.drop_duplicates(subset=['DOI_lower', 'Title_lower'], keep='first')
+        combined_df = combined_df.drop(['Title_lower', 'DOI_lower'], axis=1)
+
         return combined_df
+
+    def generate_summary(self, title: str, abstract: str) -> str:
+        """Generate a summary using the Gemini API"""
+        prompt = f"Title: {title}\nAbstract: {abstract}\n\nGenerate a brief summary of the research article:"
+
+        if not abstract:
+            prompt = f"Title: {title}\n\nGenerate a brief summary of the research article based on the title:"
+
+        model = genai.Model(model="text-bison-001"
+
+        response = model.predict(
+            prompt=prompt,
+            temperature=0.7,
+            max_output_tokens=50,
+            top_p=0.8
+        )
+
+        return response.result
